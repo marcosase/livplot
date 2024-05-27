@@ -1,3 +1,4 @@
+
 import pandas as pd
 import seaborn as sns
 import cufflinks as cf
@@ -9,34 +10,41 @@ import numpy as np
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMessageBox
-
+import pyqtgraph as pg
 
 class Ui(QtWidgets.QMainWindow):
     def __init__(self):
+        pg.setConfigOption('background', 'w') #before loading widget
+        pg.setConfigOption('foreground', 'k')
         super(Ui, self).__init__() # Call the inherited classes __init__ method
         uic.loadUi('template.ui', self) # Load the .ui file
         self.select_btn.clicked.connect(self.open_file)
-        self.head_btn.clicked.connect(self.select_header) # Remember to pass the definition/method, not the return value!
+        self.clear_btn.clicked.connect(self.clear_plot)
         self.plot_btn.clicked.connect(self.plot)#button to plot stuff
+        self.plot2_btn.clicked.connect(self.plotx2)#button to plot stuff
+        self.plotter.plotItem.showGrid(True, True, 0.7)
         self.show() # Show the GUI
  
     def open_file(self):
         global file_open
         file_open = QFileDialog.getOpenFileName()
-        self.label.setText(file_open[0])
-        return file_open[0]
+        self.label.setText(file_open[0].split('/')[-1])
+        print('*********')
+        self.select_header(file_open[0])
+        return 
     
-    def select_header(self):
+    def select_header(self, file):
         global cust, lot_line, cell_line, column_name, hdr_line
         self.x_cmb_box.clear()
         self.y_cmb_box.clear()
-        self.file = self.open_file()
-        with open(self.file) as f:
+        self.y2_cmb_box.clear()
+        
+        with open(file) as f:
             n_col = len(f.readlines()[-1].split(','))
             f.close()
 
         column_name = []
-        with open(self.file) as f:
+        with open(file) as f:
            
             for i, line in enumerate(f):
                 if 'Customer' in line:
@@ -55,25 +63,95 @@ class Ui(QtWidgets.QMainWindow):
             print(column_name)
             self.x_cmb_box.addItems([k for k in column_name])
             self.y_cmb_box.addItems([k for k in column_name])
+            self.y2_cmb_box.addItems([k for k in column_name])
             f.close()
-        return cust, lot_line, cell_line, column_name 
+        return cust, lot_line, cell_line, column_name
     
     def plot(self):
         print(cust, lot_line, cell_line, column_name, file_open[0], hdr_line)
         x_axis = self.x_cmb_box.currentText()
         y_axis = self.y_cmb_box.currentText()
         print("***************")
-        print(x_axis, y_axis)
         df = pd.read_csv(file_open[0], skiprows = hdr_line+2, names=column_name)
         print(df.head())
-        if x_axis == y_axis:
-            msg = QMessageBox()
-            msg.setWindowTitle("Error!")
-            msg.setText("Select different axis to plot!")
-            x = msg.exec_()
-            sys.exit()
-    
-        df.iplot(kind='scatter', x=x_axis, y=y_axis)
+        x_label = str(x_axis)
+        y_label = str(y_axis)
+        title = 'LIV' #to be change for the actual name
+        self.set_graph(title, x_label, y_label)
+        self.plotter.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+
+    def plotx2(self):
+        ## create a new ViewBox, link the right axis to its coordinate system
+        p1 = self.plotter
+        p2 = pg.ViewBox()
+        df = pd.read_csv(file_open[0], skiprows = hdr_line+2, names=column_name)
+        x_axis = self.x_cmb_box.currentText()
+        y_axis = self.y_cmb_box.currentText()
+        y2_axis = self.y2_cmb_box.currentText()
+
+        x_label = str(x_axis)
+        y_label = str(y_axis)
+        title = 'LIV' #to be change for the actual name
+        self.set_graph(title, x_label, y_label)
+        self.plotter.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+        
+        p1.scene().addItem(p2)
+        p1.getAxis('right').linkToView(p2)
+        p2.setXLink(p1)
+        p1.getAxis('right').setLabel(str(y2_axis), color='#0000ff')
+        print(df[str(y2_axis)])
+        p2.addItem(pg.PlotCurveItem(df[str(y2_axis)], pen='b'))
+        
+        p1.addLegend(size=(110, 0) ,offset=(10, 10))
+        p1.setTitle('<font size="2">Active Power</font>') #,**titleStyle)
+        a = p1.getAxis('top')
+        a.showValues='false'
+        a = p1.getAxis('bottom')
+        p1.showAxis('left')
+        a = p1.getAxis('left')
+        p1.showAxis('right')
+        a = p1.getAxis('right')
+        p1.showLabel('left', show=True)
+        p1.showLabel('right', show=True)
+        p1.showGrid(x=True, y=True, alpha=0.1)
+        titleStyle = {'color': '#000', 'size': '18pt'}
+        p1.setTitle(titulo, **titleStyle)
+        # SET AND CHANGE THE FONT SIZE AND COLOR OF THE PLOT AXIS LABEL
+        labelStyle = {'color': '#000', 'font-size': '16px'}
+        p1.setLabel('bottom', eixo_x, **labelStyle)
+        p1.setLabel('left', eixo_y, **labelStyle)
+        p1.setLabel('top',)
+
+
+
+
+
+    def clear_plot(self):
+        self.plotter.clear()
+
+    def set_graph(self,titulo,eixo_x,eixo_y):
+            p1 = self.plotter
+            # THESE PARAMETERS ARE FOR RESIZING AND MOVING THE POSITION OF THE LEGEND BOX
+            # I INCREASED X-SIZE AND Y-OFFSET
+            p1.addLegend(size=(110, 0) ,offset=(10, 10))
+            p1.setTitle('<font size="2">Active Power</font>') #,**titleStyle)
+            a = p1.getAxis('top')
+            a.showValues='false'
+            a = p1.getAxis('bottom')
+            p1.showAxis('left')
+            a = p1.getAxis('left')
+            p1.showAxis('right')
+            a = p1.getAxis('right')
+            p1.showLabel('left', show=True)
+            p1.showLabel('right', show=True)
+            p1.showGrid(x=True, y=True, alpha=0.1)
+            titleStyle = {'color': '#000', 'size': '18pt'}
+            p1.setTitle(titulo, **titleStyle)
+            # SET AND CHANGE THE FONT SIZE AND COLOR OF THE PLOT AXIS LABEL
+            labelStyle = {'color': '#000', 'font-size': '16px'}
+            p1.setLabel('bottom', eixo_x, **labelStyle)
+            p1.setLabel('left', eixo_y, **labelStyle)
+            p1.setLabel('top',)
 
         
 
