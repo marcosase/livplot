@@ -1,15 +1,16 @@
 
 import pandas as pd
-import seaborn as sns
-import cufflinks as cf
+#import seaborn as sns
+#import cufflinks as cf
 #import plotly
-from plotly.offline import iplot
+#from plotly.offline import iplot
 import time
 import sys
 import numpy as np
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QVBoxLayout
 import pyqtgraph as pg
 
 class Ui(QtWidgets.QMainWindow):
@@ -81,49 +82,38 @@ class Ui(QtWidgets.QMainWindow):
         self.plotter.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
 
     def plotx2(self):
-        ## create a new ViewBox, link the right axis to its coordinate system
-        p1 = self.plotter
-        p2 = pg.ViewBox()
-        df = pd.read_csv(file_open[0], skiprows = hdr_line+2, names=column_name)
-        x_axis = self.x_cmb_box.currentText()
-        y_axis = self.y_cmb_box.currentText()
-        y2_axis = self.y2_cmb_box.currentText()
 
-        x_label = str(x_axis)
-        y_label = str(y_axis)
-        title = 'LIV' #to be change for the actual name
-        self.set_graph(title, x_label, y_label)
-        self.plotter.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+        print('Not working yet')
+        # p1 = self.plotter.plotItem
+
+        # ###Plotting the first axes
+        # self.plotter.clear()
+        # x_axis = self.x_cmb_box.currentText()
+        # y_axis = self.y_cmb_box.currentText()
+        # y2_axis = self.y2_cmb_box.currentText()
+        # print("***************")
+        # df = pd.read_csv(file_open[0], skiprows = hdr_line+2, names=column_name)
+        # print(df.head())
+        # x_label = str(x_axis)
+        # y_label = str(y_axis)
+        # title = 'LIV' #to be change for the actual name
+        # self.set_graph(title, x_label, y_label)
+        # #self.plotter.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+        # p1.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+        # ###
+
+        # p2 = pg.ViewBox()
+        # p1.showAxis('right')
+        # p1.scene().addItem(p2)
+        # p1.getAxis('right').linkToView(p2)
+        # p2.setXLink(p1)
+        # p1.getAxis('right').setLabel('axis2', color='#0000ff')
+
+        # p2.setGeometry(p1.vb.sceneBoundingRect())
+        # # #adding  an item without rescaling
+        # p2.addItem(pg.PlotCurveItem(df[x_axis].values, df[y2_axis].values, symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b' ))
         
-        p1.scene().addItem(p2)
-        p1.getAxis('right').linkToView(p2)
-        p2.setXLink(p1)
-        p1.getAxis('right').setLabel(str(y2_axis), color='#0000ff')
-        print(df[str(y2_axis)])
-        p2.addItem(pg.PlotCurveItem(df[str(y2_axis)], pen='b'))
-        
-        p1.addLegend(size=(110, 0) ,offset=(10, 10))
-        p1.setTitle('<font size="2">Active Power</font>') #,**titleStyle)
-        a = p1.getAxis('top')
-        a.showValues='false'
-        a = p1.getAxis('bottom')
-        p1.showAxis('left')
-        a = p1.getAxis('left')
-        p1.showAxis('right')
-        a = p1.getAxis('right')
-        p1.showLabel('left', show=True)
-        p1.showLabel('right', show=True)
-        p1.showGrid(x=True, y=True, alpha=0.1)
-        titleStyle = {'color': '#000', 'size': '18pt'}
-        p1.setTitle(titulo, **titleStyle)
-        # SET AND CHANGE THE FONT SIZE AND COLOR OF THE PLOT AXIS LABEL
-        labelStyle = {'color': '#000', 'font-size': '16px'}
-        p1.setLabel('bottom', eixo_x, **labelStyle)
-        p1.setLabel('left', eixo_y, **labelStyle)
-        p1.setLabel('top',)
-
-
-
+       
 
 
     def clear_plot(self):
