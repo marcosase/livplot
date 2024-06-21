@@ -7,6 +7,7 @@ import pandas as pd
 import time
 import sys
 import numpy as np
+from PyQt5 import QtGui
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMessageBox
@@ -23,7 +24,10 @@ class Ui(QtWidgets.QMainWindow):
         self.clear_btn.clicked.connect(self.clear_plot)
         self.plot_btn.clicked.connect(self.plot)#button to plot stuff
         self.plot2_btn.clicked.connect(self.plotx2)#button to plot stuff
-        self.plotter.plotItem.showGrid(True, True, 0.7)
+        #self.plotter.plotItem.showGrid(True, True, 0.7)
+        self.vLine = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine = pg.InfiniteLine(angle=0, movable=False)
+        
         self.show() # Show the GUI
  
     def open_file(self):
@@ -69,6 +73,10 @@ class Ui(QtWidgets.QMainWindow):
         return cust, lot_line, cell_line, column_name
     
     def plot(self):
+        global p1
+        
+        p1 = self.plotter.plotItem
+               
         print(cust, lot_line, cell_line, column_name, file_open[0], hdr_line)
         x_axis = self.x_cmb_box.currentText()
         y_axis = self.y_cmb_box.currentText()
@@ -79,47 +87,75 @@ class Ui(QtWidgets.QMainWindow):
         y_label = str(y_axis)
         title = 'LIV' #to be change for the actual name
         self.set_graph(title, x_label, y_label)
-        self.plotter.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+        p1.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+    
+        #cross hair
+
+        p1.addItem(self.vLine, ignoreBounds=True)
+        p1.addItem(self.hLine, ignoreBounds=True)
+
+        vb = p1.vb
+        p1.scene().sigMouseMoved.connect(self.mouseMoved)
 
     def plotx2(self):
+        global p1, p2
 
-        print('Not working yet')
-        # p1 = self.plotter.plotItem
+        t1 = (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255))
+        t2 = (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255))
+        tfill = (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255))
 
-        # ###Plotting the first axes
-        # self.plotter.clear()
-        # x_axis = self.x_cmb_box.currentText()
-        # y_axis = self.y_cmb_box.currentText()
-        # y2_axis = self.y2_cmb_box.currentText()
-        # print("***************")
-        # df = pd.read_csv(file_open[0], skiprows = hdr_line+2, names=column_name)
-        # print(df.head())
-        # x_label = str(x_axis)
-        # y_label = str(y_axis)
-        # title = 'LIV' #to be change for the actual name
-        # self.set_graph(title, x_label, y_label)
-        # #self.plotter.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
-        # p1.plot(df[x_axis], df[y_axis], symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b', symbolBrush=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
-        # ###
+        color1 = '#%02x%02x%02x' % t1
+        color2 = '#%02x%02x%02x' % t2
+                
+        x_axis = self.x_cmb_box.currentText()
+        y_axis = self.y_cmb_box.currentText()
+        y2_axis = self.y2_cmb_box.currentText()
 
-        # p2 = pg.ViewBox()
-        # p1.showAxis('right')
-        # p1.scene().addItem(p2)
-        # p1.getAxis('right').linkToView(p2)
-        # p2.setXLink(p1)
-        # p1.getAxis('right').setLabel('axis2', color='#0000ff')
+        x_label = str(x_axis)
+        y_label = str(y_axis)
+        title = 'LIV'
+        self.set_graph( title, x_label, y_label)
 
-        # p2.setGeometry(p1.vb.sceneBoundingRect())
-        # # #adding  an item without rescaling
-        # p2.addItem(pg.PlotCurveItem(df[x_axis].values, df[y2_axis].values, symbol='o', pen=(np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), symbolPen='b' ))
+
+        df = pd.read_csv(file_open[0], skiprows = hdr_line+2, names=column_name)
         
-       
+        p1 = self.plotter.plotItem
+        p1.setLabels(left = y_axis)
+
+        #Create a new ViewBox
+        p2 = pg.ViewBox()
+        p1.showAxis('right')
+        p1.scene().addItem(p2)
+        p1.getAxis('right').linkToView(p2)
+        p2.setXLink(p1)
+        p1.getAxis('left').setLabel(y_axis, color=color1)
+        p1.getAxis('right').setLabel(y2_axis, color=color2)
+        p1.getAxis('bottom').setLabel(x_axis)        
+        self.updateViews()
+        p2.setGeometry(p1.vb.sceneBoundingRect())
+        p2.linkedViewChanged(p1.vb, p2.XAxis)
+
+        p1.vb.sigResized.connect(self.updateViews)
+
+        p1.plot(df[x_axis], df[y_axis], symbol='o', pen=t1, symbolPen='b', symbolBrush = tfill, symbolSize=8, name='_'.join(file_open[0].split('_')[1:3]))
+
+        plot2 = pg.ScatterPlotItem(x = df[x_axis].values, y = df[y2_axis].values, symbol='o', pen = t2, symbolPen = 'b',symbolBrush = tfill, symbolSize = 8)
+        
+        p2.addItem(plot2)
+                
+    def updateViews(self):
+        global p1, p2
+        p2.setGeometry(p1.vb.sceneBoundingRect())
+        p2.linkedViewChanged(p1.vb, p2.XAxis)
 
 
     def clear_plot(self):
+        global p1, p2
         self.plotter.clear()
+        p2.clear()
+        p1.clear()
 
-    def set_graph(self,titulo,eixo_x,eixo_y):
+    def set_graph(self, titulo, eixo_x, eixo_y):
             p1 = self.plotter
             # THESE PARAMETERS ARE FOR RESIZING AND MOVING THE POSITION OF THE LEGEND BOX
             # I INCREASED X-SIZE AND Y-OFFSET
@@ -143,7 +179,19 @@ class Ui(QtWidgets.QMainWindow):
             p1.setLabel('left', eixo_y, **labelStyle)
             p1.setLabel('top',)
 
-        
+    def mouseMoved(self, evt):
+        global p1
+        pos = evt
+               
+        if p1.sceneBoundingRect().contains(pos):
+            mousePoint = p1.vb.mapSceneToView(pos)
+            index = int(mousePoint.x())
+            if index > 0 and index < len(data1):
+                label.setText("<span style='font-size: 12pt'>x=%0.1f,   <span style='color: red'>y1=%0.1f</span>,   <span style='color: green'>y2=%0.1f</span>" % (mousePoint.x(), data1[index], data2[index]))
+            self.vLine.setPos(mousePoint.x())
+            self.hLine.setPos(mousePoint.y())
+            self.x_value.setText(str( np.round(mousePoint.x(), 4)))
+            self.y_value.setText(str( np.round(mousePoint.y(), 4)))
 
 app = QtWidgets.QApplication(sys.argv)
 window = Ui()
